@@ -1,0 +1,28 @@
+.app {
+  max-width: 40rem;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+
+.tagline {
+  color: #4b5563;
+}
+
+.api-status {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.api-status--ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.api-status--problem {
+  background: #fee2e2;
+  color: #991b1b;
+}
