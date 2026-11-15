@@ -1,0 +1,42 @@
+# Render Blueprint: infrastructure as code for the production deployment.
+# The database is hosted on Neon (free tier) and connected through DATABASE_URL.
+services:
+  - type: web
+    name: pitchsense-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    # Deploy only after the GitHub Actions checks on the commit have passed.
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false # secret: Neon connection string, entered in the Render dashboard
+      - key: CORS_ORIGINS
+        sync: false # the frontend URL, e.g. https://pitchsense.onrender.com
+
+  - type: web
+    name: pitchsense
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_URL
+        sync: false # the API URL, e.g. https://pitchsense-api.onrender.com (public, not a secret)
+    routes:
+      # Serve index.html for client-side routes so refreshing a page doesn't 404.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
