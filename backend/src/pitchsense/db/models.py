@@ -9,7 +9,7 @@ beyond Bet365).
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Date, Float, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -112,3 +112,55 @@ class MatchLineup(Base):
     )
 
     __table_args__ = (UniqueConstraint("match_api_id", "side", "slot"),)
+
+
+class Prediction(Base):
+    """Pre-match probabilities from each baseline and model for one test-season match.
+
+    Written by the predictions ETL after `pitchsense.ml.train` finishes; served to
+    the frontend for the match page's "before kickoff" panel.
+    """
+
+    __tablename__ = "predictions"
+
+    match_api_id: Mapped[int] = mapped_column(
+        ForeignKey("matches.match_api_id", ondelete="CASCADE"),
+        primary_key=True,
+        autoincrement=False,
+    )
+    # Always-pick-home baseline (trivially [1, 0, 0]).
+    home_baseline_h: Mapped[float] = mapped_column(Float, nullable=False)
+    home_baseline_d: Mapped[float] = mapped_column(Float, nullable=False)
+    home_baseline_a: Mapped[float] = mapped_column(Float, nullable=False)
+    # Bet365 implied probabilities (null when the match had no complete odds triple).
+    odds_baseline_h: Mapped[float | None] = mapped_column(Float, nullable=True)
+    odds_baseline_d: Mapped[float | None] = mapped_column(Float, nullable=True)
+    odds_baseline_a: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Logistic regression (baseline model).
+    lr_h: Mapped[float] = mapped_column(Float, nullable=False)
+    lr_d: Mapped[float] = mapped_column(Float, nullable=False)
+    lr_a: Mapped[float] = mapped_column(Float, nullable=False)
+    # Gradient boosting (advanced model).
+    gb_h: Mapped[float] = mapped_column(Float, nullable=False)
+    gb_d: Mapped[float] = mapped_column(Float, nullable=False)
+    gb_a: Mapped[float] = mapped_column(Float, nullable=False)
+
+
+class MatchGoal(Base):
+    """One scored goal in a match, with the minute it was scored.
+
+    Parsed from ESD's `Match.goal` XML column by the goal-events ETL. Powers the
+    live replay: during a replay the WebSocket emits each goal in chronological
+    order and asks the engine for a fresh probability.
+    """
+
+    __tablename__ = "match_goals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    match_api_id: Mapped[int] = mapped_column(
+        ForeignKey("matches.match_api_id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    minute: Mapped[int] = mapped_column(Integer, nullable=False)
+    team_api_id: Mapped[int] = mapped_column(ForeignKey("teams.team_api_id"), nullable=False)
+
+    __table_args__ = (UniqueConstraint("match_api_id", "minute", "team_api_id"),)
