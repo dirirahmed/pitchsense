@@ -9,6 +9,8 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
+    # Runs before each deploy goes live; applies new database migrations.
+    preDeployCommand: alembic upgrade head
     # Deploy only after the GitHub Actions checks on the commit have passed.
     autoDeployTrigger: checksPass
     envVars:

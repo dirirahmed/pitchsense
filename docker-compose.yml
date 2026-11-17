@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
     ports:
-      - "5432:5432"
+      - "55432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -18,9 +18,11 @@ services:
 
   backend:
     build: ./backend
+    # Apply migrations before serving; harmless no-op if already up to date.
     command: >
+      sh -c "alembic upgrade head &&
       uvicorn pitchsense.api.main:app
-      --host 0.0.0.0 --port 8000 --reload --reload-dir /app/src
+      --host 0.0.0.0 --port 8000 --reload --reload-dir /app/src"
     environment:
       ENVIRONMENT: development
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
@@ -29,6 +31,8 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/src:/app/src
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
     depends_on:
       db:
         condition: service_healthy

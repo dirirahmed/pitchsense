@@ -43,6 +43,8 @@ jobs:
           cache-dependency-glob: backend/uv.lock
       - name: Install dependencies
         run: uv sync --locked
+      - name: Apply migrations
+        run: uv run alembic upgrade head
       - name: Lint
         run: uv run ruff check .
       - name: Check formatting

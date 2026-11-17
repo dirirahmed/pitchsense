@@ -9,12 +9,18 @@ dependencies = [
     "pydantic-settings>=2.6",
     "sqlalchemy>=2.0.36",
     "psycopg[binary]>=3.2",
+    "alembic>=1.14",
+    "numpy>=2.1",
+    "pandas>=2.2",
+    "scikit-learn>=1.5",
+    "joblib>=1.4",
 ]
 
 [dependency-groups]
 dev = [
     "httpx>=0.28",
     "mypy>=1.13",
+    "pandas-stubs>=2.2",
     "pytest>=8.3",
     "pytest-cov>=6.0",
     "ruff>=0.8",
@@ -30,6 +36,7 @@ packages = ["src/pitchsense"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "N", "RUF"]
@@ -38,6 +45,12 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "N", "RUF"]
 strict = true
 plugins = ["pydantic.mypy"]
 files = ["src", "tests"]
+# Alembic migrations and env.py use conventions that fight strict typing; exclude them.
+exclude = ["alembic/"]
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "joblib.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

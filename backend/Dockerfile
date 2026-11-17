@@ -14,6 +14,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
 
 COPY src ./src
+COPY alembic ./alembic
+COPY alembic.ini ./
 RUN uv sync --locked --no-dev
 
 RUN useradd --create-home --uid 1000 appuser
